@@ -22,6 +22,8 @@ public class EBusHelpService extends AccessibilityService {
 
     String TAG = "EBusHelpService";
 
+    long handlerLong = 120;
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         String className = event.getClassName().toString();
@@ -40,6 +42,8 @@ public class EBusHelpService extends AccessibilityService {
                     selectPayType();
                 }else if(className.contains("my.SZTCardActivity")){
                     payBtn();
+                }else if(className.contains("check.ChooseStationActivity")){
+                    choseStationNexPage();
                 }
                 break;
         }
@@ -132,12 +136,7 @@ public class EBusHelpService extends AccessibilityService {
                     mNextMonth.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                 }
                 if(mSelectAllDays != null){
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            bookFlow();
-                        }
-                    },30);
+                    bookFlow();
                 }
             }
         }
@@ -150,6 +149,18 @@ public class EBusHelpService extends AccessibilityService {
         if(!mSelectAllDays.isChecked()){
             mSelectAllDays.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             //重新刷新控件
+        }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                bookFlowStep2();
+            }
+        },handlerLong);
+    }
+
+    @SuppressLint("NewApi")
+    private void bookFlowStep2(){
+        if(mAllDaysMoney == null || mBookBtn == null){
             recylerView(getRootInActiveWindow());
         }
         if(mAllDaysMoney != null){
@@ -168,7 +179,12 @@ public class EBusHelpService extends AccessibilityService {
                     //bookFlow();
                     //bookTick();
                     // // TODO: 2017/6/26 关闭页面刷新,再次进入刷新
-                    backPrePage();
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            backPrePage();
+                        }
+                    },handlerLong);
                 }
             }else{
                 //回到上个月
@@ -229,6 +245,13 @@ public class EBusHelpService extends AccessibilityService {
                             && child.isClickable()
                             ){
                         mBookBtn = child;
+                    }
+                }else if(text.contains("购票")){
+                    AccessibilityNodeInfo prePage = nodeInfo.getChild(i - 1);
+                    if (prePage.getClassName().toString().contains("Button")) {
+                        if (prePage.isClickable()) {
+                            mBackBtn = prePage;
+                        }
                     }
                 }
             }
@@ -306,7 +329,7 @@ public class EBusHelpService extends AccessibilityService {
     private void findPayItem(AccessibilityNodeInfo nodeInfo){
         for (int i = 0; i < nodeInfo.getChildCount(); i++) {
             AccessibilityNodeInfo child = nodeInfo.getChild(i);
-            printNodeInfo(TAG + " :: selectPayType ::",child);
+//            printNodeInfo(TAG + " :: selectPayType ::",child);
             String className = child.getClassName().toString();
             CharSequence text = child.getText();
             if(className.contains("TextView")
@@ -337,7 +360,7 @@ public class EBusHelpService extends AccessibilityService {
         // 2) 点击按钮操作
         if(mPayBtn != null){
             Toast.makeText(this,"可以预订",Toast.LENGTH_SHORT).show();
-            //mPayBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            mPayBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK);
         }
     }
 
@@ -370,12 +393,12 @@ public class EBusHelpService extends AccessibilityService {
     @SuppressLint("NewApi")
     private void backPrePage(){
         // 1) 找到需要操作的控件
-        AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
-        findBackBtn(nodeInfo);
         // 2) 点击按钮操作
-        if(mBackBtn != null){
-            mBackBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        if(mBackBtn == null){
+            AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
+            findBackBtn(nodeInfo);
         }
+         mBackBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
 
 
@@ -383,13 +406,18 @@ public class EBusHelpService extends AccessibilityService {
     private void findBackBtn(AccessibilityNodeInfo nodeInfo){
         for (int i = 0; i < nodeInfo.getChildCount(); i++) {
             AccessibilityNodeInfo child = nodeInfo.getChild(i);
-            printNodeInfo(TAG + " :: findBackBtn ::",child);
+//            printNodeInfo(TAG + " :: findBackBtn ::",child);
             String className = child.getClassName().toString();
-            CharSequence text = child.getText();
-            if(className.contains("ImageView")
-                    && text == null){
-                if(child.isClickable()){
-                    mBackBtn = child;
+            if(className.contains("TextView")
+                    && child.getText() != null
+                    ){
+                if(child.getText().toString().contains("购票")){
+                    AccessibilityNodeInfo prePage = nodeInfo.getChild(i-1);
+                    if(prePage.getClassName().toString().contains("Button")){
+                        if(prePage.isClickable()){
+                            mBackBtn = prePage;
+                        }
+                    }
                 }
             }
             if(mBackBtn == null ){
@@ -399,6 +427,41 @@ public class EBusHelpService extends AccessibilityService {
             }
         }
     }
+
+    AccessibilityNodeInfo mBookNext;
+    //进入 到下一个页面
+    @SuppressLint("NewApi")
+    private void choseStationNexPage(){
+        AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
+        findBookNextBtn(nodeInfo);
+        // 2) 点击按钮操作
+        if(mBookNext != null){
+            if(mBookNext.isClickable()){
+                mBookNext.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            }
+        }
+    }
+
+    //找到相关的控件
+    private void findBookNextBtn(AccessibilityNodeInfo nodeInfo){
+        for (int i = 0; i < nodeInfo.getChildCount(); i++) {
+            AccessibilityNodeInfo child = nodeInfo.getChild(i);
+//            printNodeInfo(TAG + " :: findBackBtn ::",child);
+            String className = child.getClassName().toString();
+            if(className.contains("Button")
+                    && child.getText() != null
+                    && child.getText().toString().contains("下一步")
+                    ){
+                mBookNext  =  child;
+            }
+            if(mBookNext == null ){
+                if(child.getChildCount() >0 ){
+                    findBackBtn(child);
+                }
+            }
+        }
+    }
+
 
     @Override
     public void onInterrupt() {

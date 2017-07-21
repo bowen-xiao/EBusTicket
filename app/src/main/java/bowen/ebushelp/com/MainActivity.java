@@ -3,7 +3,9 @@ package bowen.ebushelp.com;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -19,6 +21,8 @@ import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        mHandler = new Handler();
+        initHandler();
     }
 
     @Override
@@ -85,6 +91,36 @@ public class MainActivity extends AppCompatActivity {
     public void startBook(){
         Calendar instance = Calendar.getInstance();
         int hourOfDay = instance.get(Calendar.HOUR_OF_DAY);
+    }
+
+    private void jumpToEbus(){
+        //String pkg代表包名，String download代表下载url
+        final PackageManager pm = getPackageManager();
+        Intent intent = pm.getLaunchIntentForPackage("zxzs.ppgj");
+        if (null != intent) {//没有获取到intent
+            startActivity(intent);
+        }
+    }
+
+    //去执行任务
+    private void initHandler(){
+       /* mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Calendar instance = Calendar.getInstance();
+                int hourOfDay = instance.get(Calendar.HOUR_OF_DAY);
+                if(hourOfDay>=12){
+                    jumpToEbus();
+                }else{
+                    initHandler();
+                }
+            }
+        },500);*/
+    }
+
+    //点击进入
+    public void onEnterBtnClick(View view){
+        jumpToEbus();
     }
 
     @Override

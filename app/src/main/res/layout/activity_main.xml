@@ -45,6 +45,14 @@
                     android:padding="5dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
+
+                <Button
+                    android:onClick="onEnterBtnClick"
+                    android:text="进入EBus"
+                    android:padding="15dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
             </LinearLayout>
 
         </android.support.design.widget.CollapsingToolbarLayout>
